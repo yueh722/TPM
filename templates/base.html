@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}TPM{% endblock title%}</title>
+        <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='img/growth.ico') }}">
+        <link 
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" 
+            rel="stylesheet" 
+            integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" 
+            crossorigin="anonymous">
+        <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css"
+        />
+        <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+        {% block link %}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
+        {% endblock %}
+        
+        <style>
+            body {
+                /* // padding-bottom: 10px; */
+                font-family: Georgia, Arial, Helvetica, sans-serif !important;
+                background-color: #eee;
+                height:95vh;
+            }
+            .navbar {
+                background-image: linear-gradient(to bottom right, #5d9faa , #c4e0e5);
+            }
+            .navbar-nav > li > a.active {
+                font-size: 18px;
+                border-bottom: 2px ridge #888888;
+            }
+            
+            .footer {
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+                /* Set the fixed height of the footer here */
+                height: 60px;
+                background-color: #f5f5f5;
+              }
+            .navbar-fixed-top {
+                top:20px;
+              }
+            {% block style %}
+            p {
+                text-indent: 2em;
+            }
+            {% endblock %}
+        </style>
+        
+    </head>
+    <header>
+        
+        {% set navigation_bar = [
+            ('/', 'index', '首頁', 'bi bi-house-fill'),
+            ('/strategy', 'strategy', '建立策略', 'fa-solid fa-chart-pie'),
+            ('/strategy_tw', 'strategy_tw', '台股建立策略', 'fa-solid fa-chart-pie'),
+            ('/custom', 'custom', '自訂數據建立策略', 'bi bi-database-fill-add'),
+            ('/result', 'result', '分析結果排行', 'fa-solid fa-chart-simple'),
+            ('mailto:r10246002@ntu.edu.tw', 'error', '錯誤回報', 'bi bi-bug-fill')
+        ] -%}
+        <!-- ('/', 'strategy_bl', 'Black-Litterman配置', 'fa-solid fa-chess-knight'), -->
+        {% set active_page = active_page|default('index') -%}
+        <nav class="navbar bg-light">
+            <div class="container-fluid p-2">
+                <a class="navbar-brand mx-2" href="{{ url_for('index') }}">
+                    <h3><strong></i>投資組合大擂台</strong></h3>
+                </a>
+                <!-- TODO: Login/Logout -->
+                <div class="navbar-expand ms-auto">
+                    <ul class="navbar-nav me-2">
+                        {% if not session.username %}
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-lg" href="{{ url_for('login') }}">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                <i class="bi bi-person-fill"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle btn btn-lg" href="" role="button" data-bs-toggle="dropdown" aria-expanded="true">
+                                <i class="bi bi-person-check-fill"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="background-color: rgb(244, 250, 255);">
+                                <li class="px-3">歡迎您: {{ session.username|safe }}</li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                        <i class="fas fa-sign-out-alt pe-2 "></i>登出
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle btn btn-lg" href="" role="button" data-bs-toggle="dropdown" aria-expanded="true">
+                                <i class="fa-solid fa-globe"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <div id="google_translate_element"></div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+ 
+                
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#offcanvasNavbar"
+                    aria-controls="offcanvasNavbar">
+                    <i class="bi bi-three-dots"></i>
+                </button>
+                <div
+                    class="offcanvas offcanvas-end text-bg-light"
+                    data-bs-scroll="true"
+                    tabindex="-1"
+                    id="offcanvasNavbar"
+                    aria-labelledby="offcanvasNavbarLabel"
+                >
+                    <div class="offcanvas-header">
+                        <h4 class="offcanvas-title mt-2 p-0" id="offcanvasNavbarLabel">
+                            投資組合大擂台
+                        </h4>
+                        <button
+                            type="button"
+                            class="btn-close btn-close"
+                            data-bs-dismiss="offcanvas"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="offcanvas-body">
+                        <ul class="navbar-nav justify-content-end d-flex flex-grow-1 pe-3">
+                            {% for href, id, caption, icon in navigation_bar %}
+                            <li class="nav-item my-2">
+                                <a 
+                                    class="nav-link {% if id == active_page %}active{% endif %}"
+                                    {% if id == active_page %}aria-current="page"{% endif %}
+                                    href="{{ href|e }}">
+                                    <i class="{{ icon|e }}"></i>
+                                    <span class="mx-1">{{ caption|e }}</span>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <body>
+        {% block content %}
+        <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+        <div class="container-lg mx-auto my-2 p-4 bg-white shadow-lg" style="border-radius: 5px;">
+            <!-- <h1 class="text-4xl font-bold mb-4">Document Title - {{ active_page|e }} </h1> -->
+            <!-- <div class="alert alert-secondary" role="alert">
+                <ul>
+                    
+                    <li><i class="bi bi-caret-right-fill"></i> 本網站讓使用者可以自建投資組合，回測其績效，並與其他使用者比較、討論並改進。</li>
+                    <li><i class="bi bi-caret-right-fill"></i> 使用單位：清華大學、台灣大學、政治大學、明新科大、中華大學、臺北大學、證基會、成功大學。</li>
+                </ul>
+            </div> -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mx-3 mb-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            {% cache 300 %}
+            <div class="prose lg:prose-xl p-3">
+                <h2 class="text-xl font-bold mb-4">有效使用者數：{{num_effective_users}}、有效策略數：{{num_effective_strategies}}</h2>
+                <h2 class="text-xl font-bold mb-4">平台簡介</h2>
+                <hr class="mt-0 mb-2">
+                <p class="font-bold">
+                    「不要把所有的雞蛋放在一個籃子裡。」
+                </p>
+                <p>
+                    分散投資是一種投資策略，旨在通過將資金分散投資在不同的資產類別中，從而降低投資風險。
+                    如果兩個資產之間存在高度正相關，則它們的價格通常會同時上漲或下跌。
+                    相反，如果它們之間存在高度負相關，則它們的價格通常會發生相反的變化。
+                    因此，分散投資應選擇具有低相關性的資產，以實現風險的分散。
+                    現代投資組合理論(Modern Portfolio Theory, MPT)由哈利·馬科維茨(Harry Markowitz)
+                    於1952年首次提出的,他認為投資者應該根據風險和回報的平衡來選擇投資組合。他提出了“有效前緣”(Efficient Frontier)的概念，
+
+                </p>
+                <p>
+                    Efficient Frontier的建立基於資產收益率和風險的統計分析和優化理論。資產收益率可以通過歷史數據進行計算，而風險則通常使用標準差、協方差等統計指標進行衡量。
+
+                    假設有n個資產，它們的收益率分別為 $R_1, R_2, ..., R_n$，協方差矩陣為 $\Sigma$。假設現有一個投資組合，其中各資產的權重分別為 $w_1, w_2, ..., w_n$，則該投資組合的收益率為：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$R_p = w_1 R_1 + w_2 R_2 + ... + w_n R_n = w^T R$$
+                </span>
+                
+                <p>
+                    該投資組合的方差為：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$\begin{align}\sigma^2_p 
+                    &= w_1^2 \sigma_1^2 + w_2^2 \sigma_2^2 + ... 
+                    \\&+ w_n^2 \sigma_n^2 + 2w_1w_2\sigma_{1,2} + 
+                    2w_1w_3\sigma_{1,3} + ... \\&+ 2w_{n-1}w_n\sigma_{n-1,n} = w^T\Sigma w\end{align}$$
+                </span>
+                <p>
+                    其中，$\sigma_i$ 表示第 i 個資產的標準差，$\sigma_{i,j}$ 表示第 i 和第 j 個資產的協方差。
+
+                    為了尋找最優投資組合，我們可以使用均值-方差優化方法。該方法的核心思想是通過最小化投資組合的方差，來最大化其收益率。假設有一個投資者的風險偏好係數為 $\gamma$，則該投資者所選擇的最優投資組合為：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$\text{min}\ \frac{1}{2}w^T \Sigma w - \gamma w^T R$$
+
+                    $$\text{s.t.}\ \sum_{i=1}^n w_i = 1, w_i \geq 0$$
+                </span>
+                    
+                <p>
+                    其中，$w$ 是資產權重向量，$\Sigma$ 是協方差矩陣，$R$ 是收益率向量。目標函數是投資組合方差的一半減去風險偏好係數乘以投資組合收益率，約束條件是權重向量的元素之和為1且每個權重都不小於0。
+
+                    通過調整風險偏好係數 $\gamma$
+                    ，可以獲得不同風險水平下的最優投資組合，這些投資組合形成了有效邊界（Efficient Frontier），即在一定風險水平下，可以實現最大化收益的投資組合集合。
+                </p>
+                <div class='d-flex justify-content-center'>
+                    <div class="rounded mx-auto d-block" style="height: 80%; width: 80%;">
+                      <img src="{{ url_for('static', filename='img/frontier.jpg') }}" class="img-fluid" alt="frontier-example">  
+                    </div>
+                </div>
+                <p>
+                    在實際應用中，通常使用投資組合的夏普比率（Sharpe Ratio）作為評估指標。夏普比率可以看作是投資組合每單位風險所帶來的超額收益，其計算公式為：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$\text{Sharpe Ratio} = \frac{R_p - R_f}{\sigma_p}$$
+                </span>
+                <p>
+                    其中，$R_p$ 是投資組合的預期收益率，$R_f$ 是無風險利率，$\sigma_p$ 是投資組合的標準差。
+
+                    Efficient Frontier的建立是現代投資組合理論的基石之一。通過將不同資產的收益率和風險納入考慮，
+                    投資者可以通過構建有效邊界，實現在不同風險水平下的最優資產配置。
+                    這為投資者提供了一個更有效的投資方案，可以實現更穩定的收益和更低的風險水平。
+                </p>
+                
+                
+
+                <p class="p-0">
+                    ------
+                </p>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                固定預期報酬 $p$，令投資組合權重為 $w$, 則將波動率最小化的數學問題為:
+                            </div>
+                            <div class="card-body">
+                              <p class="card-text" style="font-size: min(2.5vmin, 20px);">
+                                $$\begin{equation}
+                                \begin{aligned}
+                                \min_{w} \quad &\frac{1}{2}w^{T}\Sigma w\quad\\
+                                \textrm{s.t.} \quad &\sum_{i=1}^{n}w_i = 1\\
+                                              &\sum_{i=1}^{n}w_i R_i \geq p\\
+                                              &0\leq w_i \leq 1 \quad , 1 \leq i \leq n
+                                \end{aligned} 
+                                \end{equation}$$
+                              </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                令投資組合權重為 $w$, 則將夏普率最大化的數學問題為:
+                            </div>
+                            <div class="card-body">
+                              <p class="card-text" style="font-size: min(2.5vmin, 20px);">
+                                $$\begin{equation}
+                                \begin{aligned}
+                                \min_{w} \quad &\frac{w^T R}{\sqrt{w^{T}\Sigma w}}\quad\\
+                                \textrm{s.t.} \quad &\sum_{i=1}^{n}w_i = 1\\
+                                &0\leq w_i \leq 1 \quad , 1 \leq i \leq n
+                                              
+                                \end{aligned}
+                                \end{equation}$$
+                              </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h2 class="text-xl font-bold mb-2 mt-4">投資組合的$\alpha$、$\beta$值</h2>
+                <hr class="mt-1 mb-3">
+                <p class="my-1">
+                    投資組合報酬率的Alpha和Beta是投資組合評估中常用的指標。
+                    Alpha代表投資組合的超額收益，Beta則代表投資組合與市場的相關性。
+                    Beta值是衡量資產相對於整個市場的波動性的指標。Beta值的公式如下：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$\beta_i = \frac{\text{Cov}(r_i,r_m)}{\text{Var}(r_m)}$$
+                </span>
+                <p>
+                    其中，$r_i$表示資產i的收益率，$r_m$表示市場收益率，
+                    $Cov(r_i,r_m)$表示資產i的收益率和市場收益率之間的協方差，
+                    $Var(r_m)$表示市場收益率的方差。Beta值越高，表示資產的波動性越大，
+                    其收益率與市場收益率之間的關聯度也越高。
+                    Beta值可以用來評估投資組合的風險程度，投資者可以通過控制投資組合中資產的Beta值來實現風險管理。
+                    Beta值可以與CAPM（Capital Asset Pricing Model）和線性回歸相關聯。在CAPM中，假設資產的預期收益率可以通過以下公式計算：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$E(r_i) = r_f + \beta_i(E(r_m) - r_f)$$
+                </span>
+                <p>
+                    
+                    其中，$E(r_i)$表示資產i的預期收益率，$r_f$表示無風險收益率，$E(r_m)$表示市場的預期收益率，
+                    $\beta_i$表示資產i的Beta值。該公式表示，資產的預期收益率是無風險收益率和市場風險溢價的加權平均值，
+                    其中市場風險溢價的大小與市場風險的大小成正比，且與資產的Beta值相關。
+                </p>
+                <p class="my-1">
+                    Alpha 值是指投資組合的實際收益率與其根據 Beta 值預期的收益率之間的差異。如果投資組合的實際收益率高於其根據 Beta 值所預期的收益率，則 Alpha 值為正；反之，如果投資組合的實際收益率低於其預期收益率，則 Alpha 值為負。
+
+                    Alpha 值可以通過線性回歸分析來計算。假設投資組合的收益率可以表示為以下公式：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$r_p = \alpha + \beta_p (r_m-f_f) + \epsilon$$
+                </span>
+                <p>
+                    其中，$r_p$ 表示投資組合的收益率，$\alpha$ 表示 Alpha 值，$\beta_p$ 表示投資組合的 Beta 值，$r_m$ 表示市場收益率，$\epsilon$ 表示誤差項。如果我們將上述公式進行線性回歸，可以得到：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$\hat{r_p} = \hat{\alpha} + \hat{\beta_p} (r_m-r_f)$$
+                </span>
+                <p>
+                    
+
+                    其中，$\hat{r_p}$ 表示預測的投資組合收益率，$\hat{\alpha}$ 表示預測的 Alpha 值，$\hat{\beta_p}$ 表示預測的 Beta 值。如果實際收益率高於預測收益率，則 $\hat{\alpha}$ 為正；反之，如果實際收益率低於預測收益率，則 $\hat{\alpha}$ 為負。
+                </p>
+                <h2 class="text-xl font-bold mb-2 mt-4">VaR 簡介</h2>
+                <hr class="mt-1 mb-3">
+                <p class="my-1">
+                    VaR (Value at Risk) 是用來衡量投資組合或資產在一定時間內可能面臨的最大潛在損失的一種風險管理指標。VaR 通常用機率的形式表達，表示在一定信心水平下，資產或投資組合在未來一定時間內的最大可能損失額。
+
+                    假設 $X$ 是一個隨機變量，表示資產或投資組合在未來一定時間內的損失額，$p$ 表示所選取的信心水平，VaR 可以表示為：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$\text{VaR}_p(X) = - \inf \{ x \in \mathbb{R} : F_X(x) \geq p \}$$
+                </span>
+                <p>
+                    其中，$F_X(x)$ 是 $X$ 的累積分布函數。這個公式的意思是，我們尋找一個最小的數值 $x$，使得資產或投資組合在未來一定時間內的損失額大於 $x$ 的機率不超過 $1-p$。這個最小的數值就是 VaR，通常表示為負數，因為它是損失額。
+
+                    例如，假設我們選取信心水平 $p=0.95$，並且假設資產或投資組合在未來一周內的報酬率的分布是正態分布 $N(\mu,\sigma^2)$，那麼根據上述公式，VaR 的值為：
+                </p>
+                <span style="font-size: min(2.5vmin, 20px);">
+                    $$\begin{align}\text{VaR}_{0.95}(X) &= -\inf\{ x \in \mathbb{R} : F_X(x) \leq 0.05 \} \\
+                    &= -\inf \{x \in \mathbb{R} : \mathbb{P}(z\leq\frac{x-\mu}{\sigma}) \leq 0.05) \} \\
+                    &= -\inf \{x \in \mathbb{R} : \Phi (\frac{x-\mu}{\sigma}) \leq 0.05 \} \\ 
+                    &= -(\mu - 1.645\times\sigma)\end{align}$$
+                </span>
+                <p>
+                    
+
+                    其中，$\Phi(x)$ 是標準常態分布的累積分布函數。
+                    需要注意的是，VaR 是一個單一數字，只反映了資產或投資組合在一定時間內的最大可能損失額，
+                    不能反映風險的分布情況。因此，在使用 VaR 進行風險管理時，
+                    還需要結合其他風險指標和風險管理方法來進行綜合分析和決策。
+                </p>
+            </div>  
+            {% endcache %}
+        </div>
+        {% endblock content %}
+        {% cache 300 %}
+        <footer id="footer" class="text-center text-white" style="background-color: #6171ce;margin-bottom: 0">
+            <div
+                class="text-center p-3"
+                style="background-color: rgba(0, 0, 0, 0.2)"
+                >
+                © 2023 Copyright NTHU-TPM 
+                <a href="https://github.com/SeanChenTaipei" target="_blank" rel="noopener" class="btn-outline-light btn-floating" role="button">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+        <!-- Copyright -->
+        </footer>
+        {% endcache %}
+        <!--jQuery -->
+        <script
+            src="https://code.jquery.com/jquery-3.6.0.js"
+            integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+            crossorigin="anonymous"
+        ></script>
+
+        
+        <!-- Boostrap Scripts -->
+        <script 
+            defer
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N" 
+            crossorigin="anonymous">
+        </script>
+        <script type="text/javascript">
+            function googleTranslateElementInit() {
+            new google.translate.TranslateElement({pageLanguage: 'zh-TW', 
+            layout: google.translate.TranslateElement.InlineLayout.HORIZONTAL}, 'google_translate_element');
+            }
+        </script>
+        <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+        {% block script %}
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js"></script>
+        <script>
+            MathJax = {
+                tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+                }
+            };
+        </script>
+        {% endblock %}
+    </body>
+</html>

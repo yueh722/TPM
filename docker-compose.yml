@@ -1,0 +1,107 @@
+version: "3.3"
+services:
+    db:
+        build:
+            context: ./sql_script/
+        ##image: postgres:15.3-alpine
+        environment:
+            POSTGRES_DB: portfolio_platform
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: password
+            PGDATA: /var/lib/postgresql/data
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        ports:
+            ##- "5436:5432"
+            - "5432:5432"
+        networks:
+            - common_network
+    #Comment for security          
+    #    pgadmin:
+    #        image: dpage/pgadmin4:latest
+    #        environment:
+    #            PGADMIN_DEFAULT_EMAIL: jjjoey020629@gmail.com
+    #            PGADMIN_DEFAULT_PASSWORD: password
+    #            PGADMIN_LISTEN_PORT: 90
+    #        ports:
+    #            - "7070:90"
+    #        volumes:
+    #            - pgadmin-data:/var/lib/pgadmin
+    #        links:
+    #            - "db:pgsql-server"
+    #        networks:
+    #        - common_network            
+    redis:
+        image: redis:7.0.11-alpine
+        container_name: myredis
+        #        ports:
+        #         - 6379:6379
+        volumes:
+            - /data/redis-data:/data
+        networks:
+            - common_network
+    flask_init:
+        build: ./
+        image: tpm-flask
+        volumes:
+            - flask-data:/flask_run
+        command: bash -c "cp -r /flask/* /flask_run"
+    flask:
+        container_name: flask
+        
+        command: bash -c "cd ../flask_run ; python main.py runserver 0.0.0.0:8000"
+        
+        ##command: bash -c "cd /flask && python main.py runserver 0.0.0.0:8000 && python update_data_daily.py"
+        
+        image: tpm-flask
+        volumes:
+            - flask-data:/flask_run
+        depends_on:
+            - db
+            - redis
+            - flask_init
+        ports:
+            - 8007:8000
+        links:
+            - 'db'
+            - 'redis'
+        networks:
+            - common_network
+    #wordpress:
+    #    image: wordpress:latest
+    #    container_name: wordpress
+    #    environment:
+    #        WORDPRESS_DB_HOST: db:5432
+    #        WORDPRESS_DB_USER: postgres
+    #        WORDPRESS_DB_PASSWORD: password
+    #        WORDPRESS_DB_NAME: portfolio_platform
+    #    ports:
+    #        - "8080:80"
+    #    volumes:
+    #        - wordpress-data:/var/www/html
+    #    depends_on:
+    #        - db
+    #    networks:
+    #        - common_network
+    
+    data_init:
+        build: ./data_init/
+        container_name: data_init
+        depends_on:
+            - db
+            - redis
+            - flask
+        links:
+            - 'db'
+            - 'redis'
+        networks:
+            - common_network
+            
+            
+volumes:
+    db-data:
+    #wordpress-data:
+    flask-data: 
+    #pgadmin-data:
+networks:
+    common_network: #    name: common_network

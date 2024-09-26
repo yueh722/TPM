@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% if session.tw == 1 %}
+    {% set active_page = 'strategy_tw' %}
+{% else %}
+    {% set active_page = 'strategy' %}
+{% endif %}
+
+
+
+{% block title %}Strategy Page{% endblock%}
+{% block style %}
+div.input-group > * {
+    border-radius: 0px;
+}
+div.card{
+    border-radius: 2px;
+}
+.card-header {
+    color: #000093;
+}
+.scroll {
+    max-height: 450px;
+    overflow-y: auto;
+}
+@keyframes cursor {
+    0% {
+        opacity: 0;
+    }
+    40% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.9;
+    }
+}
+{% endblock style %}
+
+{% block content %}
+<div class="container-fluid" style="background-color: #ffffff;min-height:95%;position:relative;">
+    <div class="container-fluid py-2">
+        <div class="alert alert-dark m-0" role="alert">
+            <ul class="fa-ul">
+                <li><span class="fa-li"><i class="fa-solid fa-scroll"></i></span>兩次建立投資組合時間需大於60秒。</li>
+                <li><span class="fa-li"><i class="fa-solid fa-scroll"></i></span>未輸入投資組合名稱則會由系統隨機生成。</li>
+            </ul>
+            
+        </div><!-- Button trigger modal -->
+        
+        <div class="modal fade" id="intro" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="card-title text-xl font-bold pt-2">
+                        {% if session.tw == 1 %}台股{% endif %}投資組合策略建立指南</h5>
+                </div>
+                <div class="modal-body">
+                    <ol class="list-group list-group-flush list-group-numbered">
+                        <li class="list-group-item">
+                            <span class="ps-2">輸入投資組合名稱。</span>
+                        </li>
+                        <li class="list-group-item">
+                            <span class="ps-2">選擇所參加的課程或競賽。</span>
+                        </li>
+                        <li class="list-group-item"><span class="ps-2">選擇資產後按下 <span class="badge bg-secondary">加入</span>。</li>
+                        <li class="list-group-item"><span class="ps-2">按下 <button type="button" class="btn btn-outline-primary btn-sm" disabled>確認資產</button> 後查看資產價格動態圖表。</span></li>
+                        <li class="list-group-item"><span class="ps-2">刪除不加入投資組合的資產。</span></li>
+                        <li class="list-group-item"><span class="ps-2">選擇建立策略相關參數。</span></li>
+                        <li class="list-group-item"><span class="ps-2">按下 <button type="button" class="btn btn-outline-danger btn-sm" disabled>確認建立</button> 並查看回傳訊息。</span></li>
+                    </ol>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">了解 !</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div class="card my-2" style="border-radius: 7px;">
+            <div class="card-header d-flex">
+                <div class="py-2 font-bold text-xl">
+                    名稱與選擇資產
+                </div>
+                <button type="button" class="btn btn-secondary ms-auto" data-bs-toggle="modal" data-bs-target="#intro">
+                    如何建立投資組合 ?
+                </button>
+            </div>
+            <div class="card-body">
+                {% cache 300 %}
+                <label for="portName" class="form-label font-bold">輸入投資組合名稱: </label>
+                <input id="portName" name="portName" type="text" class="form-control mb-3" placeholder="請輸入投資組合名稱..." required>
+                <label for="competition" class="form-label font-bold">選擇所屬課程或競賽: </label>
+                <select id="competition" class="form-select mb-3" size="1">
+                    {% include 'competitions.html' %}
+                </select>
+                {% endcache %}
+                <label for="stockAll" class="form-label font-bold">選擇資產: </label>
+                <div class="d-flex">
+                    <input name="assetSelect" class="form-control" list="datalistOptions" id="stockAll" placeholder="輸入資產名稱...">
+                    <datalist id="datalistOptions">
+                        
+                    </datalist>
+                    <button class="btn btn-secondary btn-sm"
+                            type="button"
+                            id="addStockBtn">
+                        加入
+                    </button>
+                </div>
+                <div>
+                    <ol class="list-group list-group-numbered py-3" id="stock-list" type="1">
+                        {% for s in stock %}
+                        <li class="list-group-item">
+                            <span class="px-2">{{ s|safe }}</span> 
+                            <a class="btn btn-sm btn-danger float-right delete-btn">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+        </div>
+        {% cache 300 %}
+        <div class="card" style="border-radius: 7px;">
+            <div class="card-header d-flex">
+                <div class="py-2 font-bold text-lg">
+                    價格動態圖表
+                </div>
+                <div class="btn-group ms-auto">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="submit-btn">
+                        確認資產
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="graph" style="max-height:50vh">
+                    <span>
+                        圖表將在此渲染。
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="card mt-3">
+            <div class="d-flex p-2">
+                <div class="p-2 font-bold text-lg">
+                    投組最佳化配置
+                </div>
+                <div class="btn-group ms-auto">
+                    <button type="button p-0" class="btn btn-outline-danger btn-sm" id="submit-port">
+                        確認建立
+                    </button>
+                </div>
+            </div>
+            <div class="input-group"> 
+                <span class="input-group-text bg-info">滾動視窗大小</span>
+                <select id="lookback" class="form-select">
+                    <option value="21">1個月</option>
+                    <option value="63">3個月</option>
+                    <option selected value="126">6個月</option>
+                    <option value="252">12個月</option>
+                </select>
+            </div>
+            <div class="input-group"> 
+                <span class="input-group-text bg-info">最佳化頻率</span>
+                <select id="opt-frequency" class="form-select">
+                    <option value="5">每日</option>
+                    <option value="21">每月</option>
+                    <option value="63">每季</option>
+                    <option selected value="126">每半年</option>
+                    <option value="252">每年</option>
+                </select>
+            </div>
+            <div class="input-group"> 
+                <span class="input-group-text bg-info">最佳化目標函數</span>
+                <select id="role-select" class="form-select" onchange="changeFunc(value);">
+                    <option selected value="max_sharpe">最大化夏普比率</option>
+                    <option value="max_sortino">最大化索提諾比率</option>
+                    <option value="min_volatility">最小化波動率</option>
+                    <option value="quadratic_utility">最大化效用函數</option>
+                </select>
+            </div>
+            <div class="input-group" style="display: none;" id="gamma"> 
+                <span class="input-group-text bg-info">風險厭惡係數</span>
+                <input type="number" id="util-gamma" name="targetAnnualVolatility" class="form-control fmt-pct" value="30" autocomplete="off">
+                <span class="input-group-text">%</span>
+            </div>
+        </div>
+
+        
+        <div class="modal" id="portModal" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title font-bold text-xl py-2">確認建立投資組合</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ol class="list-group list-group-flush list-group-numbered">
+                        <li class="list-group-item">確認後將會暫時關閉建立功能，請等待完成訊息，勿頻繁提交建立請求。</li>
+                        <li class="list-group-item">兩次投資組合建立時間需大於60秒。</li>
+                    </ol>
+                    <div class="input-group mt-3">
+                        <span class="input-group-text">輸入筆記</span>
+                        <textarea id="commentPort" class="form-control" aria-label="With textarea"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button id="sendPort" type="button" class="btn btn-primary" data-bs-dismiss="modal">確認</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div class="modal" id="confirmModal" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 id='modalTitle' class="modal-title font-bold text-xl">投資組合建立訊息</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <span id="confirmMes">
+                        <div id="sucMes">
+                            <span>投資組合已開始建立，請1分鐘後至結果分析查詢。</span> 
+                        </div>
+                    </span>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">確認</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        {% endcache %}
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+<script src="{{ url_for('static', filename='js/addStock.js') }}"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    var dlist = document.getElementById("datalistOptions");
+    var str = '';
+    {% if session.tw==0 %}
+        {% for key, data in data_us.items() -%}
+        str+='<option value="{{ key|e }}">{{ key|e }} | {{ data|e }}</option>';
+        {% endfor %}
+    {% endif %}
+    {% for key, data in data_tw.items() -%}
+    str+='<option value="{{ key|e }}">{{ key|e }} | {{ data|e }} </option>';
+    {% endfor %}
+    dlist.innerHTML = str;
+</script>
+{% endblock script %}

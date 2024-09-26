@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% set active_page = 'result' %}
+
+{% block style %}
+.card-header {
+    color: #000093;
+}
+{% endblock style %}
+
+{% block title %}Result Page{% endblock%}
+{% block content %}
+<div class="container-fluid" style="background-color: #eee;min-height:92%;position:relative;">
+    <div class="container-fluid px-1 py-4">
+        <div class="alert alert-light p-3 mx-3" role="alert" style="border: 1px solid black">
+            <div class="flex-row">
+                <p class="font-italic font-bold text-xl">
+                    "Risk comes from not knowing what you're doing."
+                </p>
+            </div>
+            <div class="d-flex flex-row-reverse">
+                <p class="align-self-end text-xs">- Warren Edward Buffett</p>
+            </div>
+            
+            <hr class="my-3 px-5">
+            <form method="POST">
+                <div class="input-group mb-1"> 
+                    <span class="input-group-text" id="in">選擇競賽</span>
+                    <select id="competition" class="form-select" size="1" name="competition">
+                        {% include 'competitions.html' %}
+                    </select>
+                </div>
+                <div class="input-group mb-3"> 
+                    <span class="input-group-text">排序方式</span>
+                    <select id="rrr" class="form-select" size="1" name="role">
+                        <option value="id">時間排序</option>
+                        <option value="annual_ret">報酬率排序</option>
+                        <option value="annual_sr">夏普率排序</option>
+                        <option value="vol">波動率排序</option>
+                        <option value="my">我的策略</option>
+                    </select>
+                    <div class="">
+                        <button id="changeComp" type="submit" class="btn btn-secondary"><i class="bi bi-arrow-right-square-fill"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="card m-3">
+            <div card="card p-3 m-3">
+                <div class="card-header">
+                    <ul class="fa-ul">
+                        <li><span class="fa-li"><i class="fa-solid fa-flag"></i></span>點擊ID查看詳細資訊。</li>
+                        <li><span class="fa-li"><i class="fa-solid fa-flag"></i></span>預設依策略建立時間排序方式。</li>
+                        <li><span class="fa-li"><i class="fa-solid fa-flag"></i></span>資料庫每分鐘進行更新，若策略未顯示，請一分鐘後刷新頁面。</li>
+                    </ul>
+                </div>
+                <div class="p-3 table-responsive-sm table-responsive-md table-responsive-xl">
+                    <table class="table caption-top">
+                        <thead>
+                            <tr>
+                                <th scope="col">#ID</th>
+                                <th scope="col">投組名稱</th>
+                                <th scope="col">創建者</th>
+                                <th scope="col">報酬率</th>
+                                <th scope="col">夏普率</th>
+                                <th scope="col">波動率</th>
+                                <th scope="col">最大回落</th>
+                                <th scope="col">創建時間</th>
+                            </tr>
+                        </thead>
+                        {% for info in  strategy_data %}
+                        <thead style="font-size: 1vmin'">
+                            <tr>
+                                <th scope="col" role="alert">
+                                    <a href="{{ url_for('result_view', strategy_id=info[0]) }}" class="alert-link">
+                                        <span class="badge rounded-pill text-bg-info">{{ info[0] }}</span>
+                                    </a>
+                                </th>
+                                <td>{{ info[2] }}</td>
+                                <td>{{ info[3] }}</td>
+                                <td>{{ info[4] }}</td>
+                                <td>{{ info[6] }}</td>
+                                <td>{{ info[5] }}</td>
+                                <td>{{ info[7] }}</td>
+                                <td>{{ info[1]|truncate(32, False, '', 0) }}</td>
+                            </tr>
+                        </thead>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+
+
+{% endblock script %}
